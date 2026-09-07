@@ -1,0 +1,1782 @@
+---
+title: "Volleymetrics Code"
+format: pdf
+editor: visual
+---
+
+# Reception Statistic Analysis
+
+## Functions List
+
+### find_rec_player_report
+
+Input a player name and it will provide a data frame of the players average pass rating based off of where they pass the ball from.
+
+### find_rec_team_report
+
+Input a team name and it will provide a data frame of all the players and their average pass rating based off of where they pass the ball from.
+
+### Team_Win_Point_Percentage_By_Pass
+
+Input a team name and it will provide a list of the % chance of winning a point based off of the pass rating.
+
+## Pass Reception Startup
+
+```{r}
+
+library(tidyverse)
+library(dplyr)
+library(datavolley)
+?datavolley
+match <- dv_read("Beck_Zimmerman_MSU-IOWA.vsm")
+match
+
+stress <- match$plays |> mutate(difference_points)
+
+
+```
+
+```{r}
+
+library(tidyverse)
+match_data
+match_data <- match$plays
+match
+all_receptions <- match_data |> filter(skill == "Reception") |>
+  mutate(pass_rating = case_match(evaluation_code,
+    "#" ~ 4,
+    "+" ~ 3,
+    "!" ~ 2,
+    "-" ~ 1,
+    "/" ~ 0,
+    "=" ~ 0,
+    .default = NA
+  )) |> select(player_number, player_name, team, skill, skill_subtype, point_won_by, pass_rating)
+
+all_receptions
+
+passer_rating_by_player_num <- all_receptions |> group_by(player_number, player_name, team) |>
+  summarize(average_pass_rating = mean(pass_rating))
+  
+
+passer_rating_by_player_num
+
+```
+
+## Passing Rating of Team
+
+```{r}
+
+avg_pass_rtg_by_team <- all_receptions |> group_by(team) |>
+  summarize(avg_pass_rating = mean(pass_rating)) |>
+  mutate(wl = case_match(team,
+                         "Michigan State University" ~ 1,
+                         "University of Iowa" ~ 0))
+
+avg_pass_rtg_by_team
+
+```
+
+## Reading all the match data in
+
+```{r}
+
+filenames <- c(
+" Beck_Zimmerman_PSU-PITT.vsm", 
+"Anika_Malapati_IND-BRA.vsm", 
+"Anika_Malapati_IOWA-UW.vsm", 
+"Anika_Malapati_NW-NEB.vsm", 
+"Anika_Malapati_OSU-Ohio.vsm", 
+"Anika_Malapati_PSU-MSU.vsm", 
+"Anika_Malapati_PSU-UK.vsm",
+"Anika_Malapati_PU-SMU.vsm",
+"Anika_Malapati_RUT-MSU.vsm",
+"Anika_Malapati_RUT-UMICH.vsm",
+"Anika_Malapati_STA-UT.vsm",
+"Anika_Malapati_UMICH-OSU.vsm",
+"Anika_Malapati_UMN-MSU.vsm",
+"Anika_Malapati_UMN-RU.vsm",
+"Anika_Malapati_UTEP-TAMUCC.vsm",
+"Anika_Malapati_UTEP-UCD.vsm",
+"Anika_Malapati_UW-Madison-UMD.vsm",
+"Anika_Malapati_UW-NW.vsm",
+"Anika_Malapati_UW-PSU.vsm",
+"Anika_Malapati_UW-USC.vsm",
+#"Beck_Zimmerman_BAL-PUR.vsm",
+"Beck_Zimmerman_ILL-PSU.vsm",
+#"Beck_Zimmerman_MEM-TSU.vsm",
+"Beck_Zimmerman_MICH_IOWA.vsm",
+"Beck_Zimmerman_MICH-MSU.vsm",
+"Beck_Zimmerman_MSU-IOWA.vsm",
+"Beck_Zimmerman_MSU-UMD.vsm",
+"Beck_Zimmerman_NU-IU.vsm",
+"Beck_Zimmerman_ORE-UMN.vsm",
+"Beck_Zimmerman_ORE-WISC.vsm",
+"Beck_Zimmerman_OSU-RU.vsm",
+"Beck_Zimmerman_PEP-UCD.vsm",
+#"Beck_Zimmerman_PEP-UTP.vsm",
+#"Beck_Zimmerman_PSU-CMU.vsm",
+"Beck_Zimmerman_PSU-PRIN.vsm",
+"Beck_Zimmerman_STA-UF.vsm",
+"Beck_Zimmerman_STAN-DAVIS.vsm",
+#"Beck_Zimmerman_STAN-USU.vsm",
+"Beck_Zimmerman_TSU-UTEP.vsm",
+"Beck_Zimmerman_UH-PORT.vsm",
+"Beck_Zimmerman_UMD-RU.vsm",
+#"Beck_Zimmerman_UOH-UVU.vsm",
+"Beck_Zimmerman_USC-PURD.vsm",
+"Beck_Zimmerman_UW-MSU.vsm",
+"Beck_Zimmerman_UW-UMN.vsm",
+#"Beck_Zimmerman_WISC-MICH.vsm",
+"Brandon_Wong_STA-ORE.vsm",
+"Ethan_Rome_IU-NU.dvw",
+"Ethan_Rome_NU-UI.dvw",
+"Ethan_Rome_OSU-UF.dvw",
+"Ethan_Rome_OSU-WSU.dvw",
+"Ethan_Rome_OU-UW.dvw",
+"Ethan_Rome_PSU-UW.dvw",
+"Ethan_Rome_PUR-UW.dvw",
+"Ethan_Rome_TCU-PITT.dvw",
+"Ethan_Rome_TSU-ASU.dvw",
+"Ethan_Rome_UIUC-UW.dvw",
+"Ethan_Rome_UMN-UNL.dvw",
+"Ethan_Rome_UNL-STA.dvw",
+"Ethan_Rome_UO-UMICH.dvw",
+"Ethan_Rome_UTEP-UTRGV.dvw",
+"Ethan_Rome_UW-UIUC.dvw",
+"Ethan_Rome_UWM-USC.dvw",
+"Ethan_Rome_WKU-IU.dvw",
+"Ethan_Rome-IU-UW.dvw",
+"Grace_Palumbo_MARY-UIUC.vsm",
+"Grace_Palumbo_MARY-WISC.vsm",
+"Grace_Palumbo_MICH-MIN.vsm",
+"Grace_Palumbo_ORE-IOWA.vsm",
+"Grace_Palumbo_OSU-TROY.vsm",
+"Grace_Palumbo_OSU-USC.vsm",
+"Grace_Palumbo_OSU-UVA.vsm",
+"Grace_Palumbo_PSU-TCU.dvw",
+"Grace_Palumbo_RUT-OSU.vsm",
+"Grace_Palumbo_TSU-TULSA.vsm",
+"Grace_Palumbo_UH-PORT.vsm",
+"Grace_Palumbo_UH-SJU.vsm",
+"Grace_Palumbo_UM-STA.vsm",
+"Grace_Palumbo_UNL-UIUC.vsm",
+"Grace_Palumbo_UO-PSU.vsm",
+"Grace_Palumbo_UW-WISC.vsm",
+"2025-12-04 UCLA-GT.dvw",
+"2025-09-20 UCLA-UH.dvw",
+"2025-09-19 UCLA-TXSU.dvw",
+"2025-10-08 UCLA-MIN.dvw",
+"2025-10-22 UCLA-ORE.dvw",
+"2025-09-02 UCLA-PEPP.dvw",
+"2025-09-11 UCLA-UTEP.dvw",
+"2025-09-28 UCLA-PSU.dvw",
+"2025-09-26 UCLA-OSU.dvw",
+"2025-10-11 UCLA-USC.dvw",
+"2025-11-20 UCLA-ILL.dvw",
+"2025-09-05 UCLA-TCU.dvw",
+"2025-11-28 UCLA-MSU.dvw",
+"2025-10-25 UCLA-MAR.dvw",
+"2025-11-08 UCLA-NU.dvw",
+"2025-10-17 UCLA-WIS.dvw",
+"2025-09-13 UCLA-TSU.dvw",
+"2025-09-21 UCLA-STA.dvw",
+"2025-11-26 UCLA-UM.dvw",
+"2025-09-06 UCLA-TCU.dvw",
+"2025-11-14 UCLA-UNL.dvw",
+"2025-12-05 UCLA-UK.dvw",
+"2025-11-15 UCLA-Rut.dvw",
+"2025-11-02 UCLA-UW.dvw",
+"2025-09-12 UCLA-ORU.dvw",
+"2025-10-02 UCLA-PUR.dvw",
+"2025-09-01 UCLA-CSULB.dvw",
+"2025-11-06 UCLA-ORE.dvw",
+"2025-11-22 UCLA-UW.dvw",
+"2025-10-04 UCLA-IU.dvw"
+)
+
+
+list_of_matches <- lapply(filenames, dv_read)
+
+match_outcomes <- bind_rows(lapply(list_of_matches,
+                                  function(x){
+                                    x$meta$teams |>
+                                      mutate(match_id = x$meta$match_id) |>
+                                      dplyr::select(match_id, team, won_match)
+                                  }))
+
+all_match_data <- bind_rows(lapply(list_of_matches, function(x) {
+  x$plays |>
+    mutate(match_id = x$meta$match_id)
+}))
+
+all_matches_outcomes <- all_match_data |> left_join(match_outcomes, by = c("match_id", "team"))
+
+write.csv(all_matches_outcomes, "all_matches_outcomes.csv")
+
+```
+
+## Reception Analysis Function
+
+```{r}
+
+
+all_match_receptions <- all_matches_outcomes |>
+  filter(skill == "Reception") |>
+  mutate(pass_rating = case_match(evaluation_code,
+    "#" ~ 4,
+    "+" ~ 3,
+    "!" ~ 2,
+    "-" ~ 1,
+    "/" ~ 0,
+    "=" ~ 0,
+    .default = NA
+  ), win_loss = if_else(won_match, 1, 0)) |> 
+  dplyr::select(player_number, player_name, team, skill, skill_subtype, point_won_by, pass_rating, win_loss)
+
+all_pass_rtg_by_win <- all_match_receptions |> filter(win_loss == 1) |>
+  summarize(avg_pass_rating = mean(pass_rating))
+
+all_pass_rtg_by_loss <- all_match_receptions |> filter(win_loss == 0) |>
+  summarize(avg_pass_rating = mean(pass_rating))
+
+avg_pass_rtg_by_team <- all_match_receptions |> group_by(team, win_loss) |>
+  summarize(avg_pass_rating = mean(pass_rating))
+
+
+
+
+reception_by_location <- all_match_receptions |> group_by(skill_subtype) |>
+  summarize(avg_pass_rating = mean(pass_rating))
+reception_by_location
+
+reception_by_player_by_location <- all_match_receptions |> group_by(player_number, player_name, skill_subtype, team) |>
+  summarize(avg_pass_rating = mean(pass_rating, na.rm = TRUE), .groups = "drop")
+reception_by_player_by_location
+
+rec_low_ranked <- reception_by_player_by_location |> filter(skill_subtype == "Low") |>
+  arrange(desc(avg_pass_rating))
+rec_low_ranked
+
+find_rec_player_report <- function(x) {
+  
+  reception_by_player_by_location |> filter(player_name == x) |> 
+    dplyr::select(player_name, skill_subtype, avg_pass_rating) |>
+  arrange(desc(avg_pass_rating))
+  
+}
+
+find_rec_player_report("Anna Pringle")
+
+cat("Teams that win matches have an average pass rating of", as.numeric(all_pass_rtg_by_win), ".\n")
+
+cat("Teams that lose matches have an average pass rating of", as.numeric(all_pass_rtg_by_loss), ".\n")
+
+cat("This results in a difference of", as.numeric(all_pass_rtg_by_win) - as.numeric(all_pass_rtg_by_loss), "average passer rating.", "\n")
+
+
+```
+
+## Player Reception Location Function and by team option
+
+```{r}
+
+find_rec_player_report <- function(x) {
+  
+  reception_by_player_by_location |> filter(player_name == x) |> 
+    dplyr::select(player_name, skill_subtype, avg_pass_rating) |>
+  arrange(desc(avg_pass_rating))
+  
+}
+
+find_rec_player_report("Adonia Faumuina")
+
+find_rec_team_report <- function(x) {
+  
+  reception_by_player_by_location |> filter(team == x) |> 
+    dplyr::select(team, player_number, player_name, skill_subtype, avg_pass_rating) |>
+  arrange(desc(avg_pass_rating))
+  
+}
+
+find_rec_team_report("University of Southern California")
+
+all_match_receptions_pass_totals <- all_match_receptions |> 
+  group_by(player_name) |> 
+  mutate(total_passes = n()) |> 
+  filter(total_passes >= 20) |>
+  summarize(avg_pass_rating = mean(pass_rating, na.rm = TRUE))
+
+all_match_receptions |> 
+  group_by(player_name) |> 
+  mutate(total_passes = n()) |>
+  filter(team == "University of Southern California")
+  
+reception_by_player_by_location
+all_match_receptions_pass_totals |> arrange(desc(avg_pass_rating))
+
+
+reception_by_player_by_location |> filter(skill_subtype == "Overhand") |> arrange(desc(avg_pass_rating))
+
+```
+
+## Point Won or Lost by pass rating Analysis
+
+```{r}
+
+# count of 0 pass rated
+pass_0 <- all_match_receptions |> filter(pass_rating == 0)
+pass_0 <- nrow(pass_0)
+
+# count of 1 pass rated
+pass_1 <- all_match_receptions |> filter(pass_rating == 1)
+pass_1 <- nrow(pass_1)
+
+# count of 2 pass rated
+pass_2 <- all_match_receptions |> filter(pass_rating == 2)
+pass_2 <- nrow(pass_2)
+
+# count of 3 pass rated
+pass_3 <- all_match_receptions |> filter(pass_rating == 3)
+pass_3 <- nrow(pass_3)
+
+# count of 4 pass rated
+pass_4 <- all_match_receptions |> filter(pass_rating == 4)
+pass_4 <- nrow(pass_4)
+
+# pass total
+pass_total <- nrow(all_match_receptions)
+
+# adding column of 1 or 0 for yes or no the team that passed won the point
+pass_rating_point_wol <- all_match_receptions |>
+  mutate(won_point = ifelse(point_won_by == team, 1, 0))
+
+# pass rating 0 win loss percentage
+pass_rating_point_0_won <- pass_rating_point_wol |>
+  filter(pass_rating == 0, won_point == 1)
+
+total_points_won_0 <- nrow(pass_rating_point_0_won)
+
+total_pts_won_per_0 <- total_points_won_0 / pass_0
+total_pts_won_per_0
+
+for (i in 0:4) {
+  
+  pass_i <- all_match_receptions |> filter(pass_rating == i)
+  pass_i <- nrow(pass_i)
+  
+  pass_rating_point_i_won <- pass_rating_point_wol |>
+  filter(pass_rating == i, won_point == 1)
+  
+  total_points_won_i <- nrow(pass_rating_point_i_won)
+  total_pts_won_per_i <- round((total_points_won_i / pass_i) * 100, digits = 2)
+  
+  cat(total_pts_won_per_i, "% chance of winning the point with a ", i, " pass rating", "\n", sep = "")
+  
+}
+
+```
+
+## Function to find % point is won by passing rating by team
+
+```{r}
+
+Team_Win_Point_Percentage_By_Pass <- function(x) {
+  
+  pass_rating_point_wol_team <- pass_rating_point_wol |> filter(team == x)
+  
+  all_match_receptions_team <- all_match_receptions |> filter(team == x)
+  
+  for (i in 0:4) {
+  
+  pass_i <- all_match_receptions_team |> filter(pass_rating == i)
+  pass_i <- nrow(pass_i)
+  
+  pass_rating_point_i_won <- pass_rating_point_wol_team |>
+  filter(pass_rating == i, won_point == 1)
+  
+  total_points_won_i <- nrow(pass_rating_point_i_won)
+  total_pts_won_per_i <- round((total_points_won_i / pass_i) * 100, digits = 2)
+  
+  cat(total_pts_won_per_i, "% chance of winning the point with a ", i, " pass rating", "\n", sep = "")
+  
+}
+  
+}
+
+Team_Win_Point_Percentage_By_Pass("Pennsylvania State University")
+
+```
+## NEW OFFENSIVE STATISTIC
+
+```{r}
+
+all_attacks <- all_matches_outcomes |> filter(skill == "Attack")
+
+all_attacks_grouped <- all_attacks |> group_by(player_name) |>
+  mutate(total_hits = n()) |> 
+  ungroup() |> 
+  filter(total_hits >= 25) |>
+  dplyr::select(team, player_number, player_name, skill_type, evaluation_code, evaluation, attack_code, attack_description, skill_subtype, num_players_numeric, phase, total_hits) |>
+  mutate(attack_rating = case_match(evaluation_code,
+    "#" ~ 3,
+    "+" ~ 2,
+    "-" ~ 1,
+    "/" ~ 0,
+    "=" ~ 0,
+    .default = NA
+  )) |> dplyr::select(-evaluation_code, -evaluation, -skill_type, -skill_subtype) |>
+  mutate(block_rating = case_match(num_players_numeric,
+    4 ~ 0,
+    3 ~ 3,
+    2 ~ 2,
+    1 ~ 1,
+    0 ~ 0,
+    .default = NA
+  )) |>
+    mutate(rec_tran_phase_diff_score = case_match(phase,
+    "Reception" ~ 1,
+    "Transition" ~ 1.5,
+    .default = NA
+  )) |> 
+  mutate(diff_score = rec_tran_phase_diff_score * block_rating) |>
+  mutate(new_offensive_strength_stat = (attack_rating + 1) / (diff_score + 1))
+
+all_attacks_grouped
+
+kennedy_martin_attacks <- all_attacks_grouped |> filter(player_name == "Kennedy Martin") |>
+  drop_na() |>
+  mutate(OSS = mean(new_offensive_strength_stat)) |>
+  dplyr::select(team, player_number, player_name, total_hits, OSS) |>
+  slice(1)
+
+player_attack_score <- function(player) {
+  
+  player_attacks <- all_attacks_grouped |> filter(player_name == player) |>
+  drop_na() |>
+  mutate(OSS = mean(new_offensive_strength_stat)) |>
+  dplyr::select(team, player_number, player_name, total_hits, OSS) |>
+  slice(1)
+  return(player_attacks)
+  
+}
+
+player_attack_score("Kennedy Martin")
+player_attack_score("Olivia Babcock")
+player_attack_score("Harper Murray")
+player_attack_score("Andi Jackson")
+player_attack_score("Carter Booth")
+
+players <- c("Kennedy Martin", "Olivia Babcock", "Harper Murray", "Andi Jackson", "Carter Booth", "Emmi Sellman", "Tendai Titley", "Gentry Brown", "Staniszewska Karolina", "Mumcular Bianca")
+
+player_stats <- players |> 
+  map_dfr(player_attack_score)
+
+print(player_stats)
+
+all_attacks_OSS <- all_attacks_grouped |> group_by(player_name) |> drop_na() |> 
+  mutate(OSS = mean(new_offensive_strength_stat)) |>
+  dplyr::select(team, player_number, player_name, total_hits, OSS) |>
+  distinct()
+  
+all_attacks_OSS
+
+max(all_attacks_OSS$OSS)
+min(all_attacks_OSS$OSS)
+
+all_attacks_OSS |> filter(OSS == 3.02)
+all_attacks_OSS |> filter(OSS < 1)
+
+```
+
+## Libero out of system efficiency
+
+```{r}
+
+# removing the double up attacks and combining the set and attacks together into the same line of code
+all_match_set_attack <- all_match_data |> filter(skill == "Set" | skill == "Attack") |> filter(team == "Pennsylvania State University") |> filter(!(skill == "Attack" & lag(skill) == "Attack")) |>
+  mutate(play_id = cumsum(skill == "Set")) |>
+  pivot_wider(
+    id_cols = c(video_file_number, play_id, team),
+    names_from = skill,
+    values_from = -c(video_file_number, play_id, team),
+    names_glue = "{skill}_{.value}"
+  )
+
+# removing the setter from the calculations
+all_match_set_attack_no_setter <- all_match_set_attack |> filter(Set_player_number != 7) |> dplyr::select(Set_player_number, Set_player_name, Attack_player_number, Attack_player_name, Attack_evaluation_code) |>
+  mutate(attack_rating = case_match(Attack_evaluation_code,
+    "#" ~ 1,
+    "+" ~ 0,
+    "-" ~ 0,
+    "/" ~ -1,
+    "=" ~ -1,
+    .default = NA
+  )) |> drop_na() |>
+  group_by(Set_player_number) |>
+  mutate(hitter_effiency = sum(attack_rating) / n()) |>
+  mutate(number_sets = n()) |>
+  ungroup()
+
+# Compiling the table into a summary
+
+setter_hitter_efficiency <- all_match_set_attack_no_setter |>
+  group_by(Set_player_number, Set_player_name) |>
+  summarize(
+    hitter_effiency = sum(attack_rating) / n(),
+    number_sets = n(),
+    .groups = "drop"
+  )
+
+setter_hitter_efficiency
+
+```
+
+
+
+
+## Anika R Code
+
+
+
+
+
+## Shiny Dashboard
+
+```{r}
+
+library(shiny)
+library(tidyverse)
+library(bslib) 
+
+# ==========================================
+# UI
+# ==========================================
+ui <- page_navbar(
+  title = "Volleyball Analytics Dashboard",
+  theme = bs_theme(version = 5, preset = "flatly"),
+  
+  # TAB 1: PLAYER & TEAM STATS
+  nav_panel(title = "Serve Reception",
+    layout_sidebar(
+      sidebar = sidebar(
+        selectInput("player_select", "Select Player for Report:", choices = NULL),
+        helpText("Data pulled from global environment. Only players with >20 total passes shown.")
+      ),
+      
+      layout_columns(
+        col_widths = c(12, 12, 6, 6),
+        card(card_header("Overall Match Passing Statistics"), uiOutput("win_loss_summary")),
+        card(card_header("Average Pass Rating by Team"), tableOutput("team_averages")),
+        card(card_header("Player Reception Report (By Location)"), tableOutput("player_report")),
+        card(card_header("Overall Passer Rating Leaderboard"), tableOutput("overall_leaderboard"))
+      )
+    )
+  ),
+  
+  # TAB 2: POINT WIN % BY PASS RATING
+  nav_panel(title = "Point Win % Analysis",
+    layout_sidebar(
+      sidebar = sidebar(
+        selectInput("team_select", "Select Team to Analyze:", choices = NULL),
+        helpText("Analyze the probability of winning the point based on the pass rating.")
+      ),
+      
+      layout_columns(
+        col_widths = c(6, 6), 
+        card(card_header("Overall (All Teams) % Chance to Win Point"), tableOutput("overall_point_win_pct")),
+        card(card_header(textOutput("team_point_win_header")), tableOutput("team_point_win_pct"))
+      )
+    )
+  ),
+  
+  # TAB 3: OFFENSIVE STRENGTH STAT (OSS)
+  nav_panel(title = "Offensive Strength (OSS)",
+    layout_sidebar(
+      sidebar = sidebar(
+        selectInput("oss_team_select", "Select Team Roster:", choices = NULL),
+        helpText("Displays your custom Offensive Strength Stat (OSS). Factors in attack outcome, number of blockers, and game phase."),
+        helpText(strong("Note: "), "Only includes players with 20 or more attacks.")
+      ),
+      
+      layout_columns(
+        col_widths = c(6, 6),
+        card(
+          card_header(textOutput("oss_team_header")),
+          tableOutput("oss_team_table")
+        ),
+        card(
+          card_header("Overall Match OSS Leaderboard"),
+          tableOutput("oss_overall_table")
+        )
+      )
+    )
+  ),
+  
+  # TAB 4: OUT OF SYSTEM EFFICIENCY 
+  nav_panel(title = "Out of System",
+    layout_sidebar(
+      sidebar = sidebar(
+        selectInput("oos_team_select", "Select Team:", choices = NULL),
+        helpText("Analyzes the hitting efficiency of attackers based on who set them the ball."),
+        helpText(strong("Note: "), "Only displays players with 10 or more sets. The player with the highest volume per team is marked as the Primary Setter.")
+      ),
+      
+      card(
+        card_header(textOutput("oos_header")),
+        tableOutput("oos_table")
+      )
+    )
+  ),
+
+  # TAB 5: SERVING ANALYSIS (SPI)
+  nav_panel(title = "Serving (SPI)",
+    layout_sidebar(
+      sidebar = sidebar(
+        selectInput("serve_team_select", "Select Team:", choices = NULL),
+        helpText("Serve Performance Index (SPI): Ace (#) = +1.0, Good Pressure (+) = +0.5, Error (-) = -1.0. Higher is better."),
+        helpText(strong("Note: "), "Player leaderboards only include servers with 20 or more serves. Zones are the server's start zone.")
+      ),
+
+      layout_columns(
+        col_widths = c(6, 6, 6, 6),
+        card(card_header(textOutput("serve_team_header")), tableOutput("serve_team_table")),
+        card(card_header("Overall SPI Leaderboard"), tableOutput("serve_overall_table")),
+        card(card_header(textOutput("serve_zone_header")), tableOutput("serve_zone_table")),
+        card(card_header("SPI by Serve Zone"), plotOutput("serve_zone_plot"))
+      )
+    )
+  ),
+
+  # TAB 6: BLOCKING - OVERALL SUMMARY
+  nav_panel(title = "Blocking (Overall)",
+    layout_sidebar(
+      sidebar = sidebar(
+        helpText("Block Influence Score (BIS): Block Kill (#) = +1.0, Block Touch (+) = +0.5, Block Error (-) = -1.0."),
+        helpText("Efficiency = (Kills - Errors) / Attempts. Touch Rate = share of blocks that win the point or stay in play."),
+        helpText(strong("Note: "), "Player leaderboard only includes blockers with 10 or more block attempts.")
+      ),
+
+      layout_columns(
+        col_widths = c(12, 12, 12),
+        card(card_header("Overall Blocking Leaderboard (BIS)"), tableOutput("block_overall_table")),
+        card(card_header("Team Blocking Summary"), tableOutput("block_team_summary")),
+        card(card_header("Opponent Hitting % vs Block Presence (All Teams)"), tableOutput("block_impact_table"))
+      )
+    )
+  ),
+
+  # TAB 7: BLOCKING - SPECIFIC TEAM
+  nav_panel(title = "Blocking (Team)",
+    layout_sidebar(
+      sidebar = sidebar(
+        selectInput("block_team_select", "Select Team:", choices = NULL),
+        helpText("Block Influence Score (BIS): Block Kill (#) = +1.0, Block Touch (+) = +0.5, Block Error (-) = -1.0."),
+        helpText("Efficiency = (Kills - Errors) / Attempts. Touch Rate = share of blocks that win the point or stay in play."),
+        helpText(strong("Note: "), "Player tables only include blockers with 10 or more block attempts.")
+      ),
+
+      layout_columns(
+        col_widths = c(12, 6, 6),
+        card(card_header(textOutput("block_team_header")), tableOutput("block_team_table")),
+        card(card_header(textOutput("block_impact_team_header")), tableOutput("block_impact_team_table")),
+        card(card_header(textOutput("block_eff_header")), plotOutput("block_eff_plot"))
+      )
+    )
+  ),
+
+  # ==========================================
+  # PRESSURE / CLUTCH SITUATIONS (score >= 20)
+  # ==========================================
+  nav_menu(
+    title = "Pressure / Clutch",
+
+    # CLUTCH SERVING
+    nav_panel(title = "Clutch Serving",
+      layout_sidebar(
+        sidebar = sidebar(
+          selectInput("clutch_serve_team", "Select Team:", choices = NULL),
+          helpText("Serves hit when either team has reached 20 points."),
+          helpText(strong("Aggressive %"), "= Ace or Positive serves. ",
+                   strong("Point-Scoring %"), "= rally won while serving.")
+        ),
+        layout_columns(
+          col_widths = c(12, 12),
+          card(card_header(textOutput("clutch_serve_header")), tableOutput("clutch_serve_team_table")),
+          card(card_header("Clutch Serving Leaderboard (All Teams)"), tableOutput("clutch_serve_overall_table"))
+        )
+      )
+    ),
+
+    # CLUTCH RECEPTION
+    nav_panel(title = "Clutch Reception",
+      layout_sidebar(
+        sidebar = sidebar(
+          selectInput("clutch_rec_team", "Select Team:", choices = NULL),
+          helpText("Receptions made when either team has reached 20 points."),
+          helpText(strong("Good Pass %"), "= Perfect or Positive passes. ",
+                   strong("Side-Out %"), "= rally won after passing.")
+        ),
+        layout_columns(
+          col_widths = c(12, 12),
+          card(card_header(textOutput("clutch_rec_header")), tableOutput("clutch_rec_team_table")),
+          card(card_header("Clutch Reception Leaderboard (All Teams)"), tableOutput("clutch_rec_overall_table"))
+        )
+      )
+    ),
+
+    # CLUTCH OFFENSE
+    nav_panel(title = "Clutch Offense",
+      layout_sidebar(
+        sidebar = sidebar(
+          selectInput("clutch_off_team", "Select Team:", choices = NULL),
+          helpText("Attacks taken when either team has reached 20 points."),
+          helpText("Efficiency = (Kills - Errors - Blocked) / Attempts."),
+          helpText(strong("Note: "), "Only includes players with 10 or more clutch attacks.")
+        ),
+        layout_columns(
+          col_widths = c(12, 12),
+          card(card_header(textOutput("clutch_off_header")), tableOutput("clutch_off_team_table")),
+          card(card_header("Clutch Offense Leaderboard (All Teams)"), tableOutput("clutch_off_overall_table"))
+        )
+      )
+    ),
+
+    # ALL-AROUND CLUTCH
+    nav_panel(title = "All-Around Clutch",
+      layout_sidebar(
+        sidebar = sidebar(
+          helpText("Clutch Index combines all three skills in pressure situations:"),
+          helpText("(Hitting Eff x 100) + Side-Out % + Serve Point-Scoring %."),
+          helpText(strong("Note: "), "Only includes players with 15 or more total clutch touches.")
+        ),
+        layout_columns(
+          col_widths = c(12, 12),
+          card(card_header("Most Clutch Player on Each Team"), tableOutput("top_clutch_team_table")),
+          card(card_header("Top 20 All-Around Clutch Players"), tableOutput("clutch_overall_table"))
+        )
+      )
+    )
+  ),
+
+  # ==========================================
+  # SERVE EFFICIENCY INDEX (SEI)
+  # ==========================================
+  nav_menu(
+    title = "Serve Efficiency (SEI)",
+
+    # SEI LEADERBOARD
+    nav_panel(title = "SEI Leaderboard",
+      layout_sidebar(
+        sidebar = sidebar(
+          selectInput("sei_team", "Select Team:", choices = NULL),
+          helpText("SEI = (Win% x 0.5) + (Ace% x 0.3) + (OOS% x 0.2) - (Error% x 0.1)."),
+          helpText("OOS% = serves that forced the opponent out of system."),
+          helpText(strong("Note: "), "Only includes player/serve-type combos with 20 or more serves.")
+        ),
+        layout_columns(
+          col_widths = c(12, 12),
+          card(card_header(textOutput("sei_team_header")), tableOutput("sei_team_table")),
+          card(card_header("Top SEI Servers (All Teams)"), tableOutput("sei_overall_table"))
+        )
+      )
+    ),
+
+    # SERVE TYPE COMPARISON
+    nav_panel(title = "Serve Type Comparison",
+      layout_sidebar(
+        sidebar = sidebar(
+          helpText("Season-long averages comparing Float, Jump, and Jump-Float serves across all games.")
+        ),
+        card(
+          card_header("Advanced Serve Efficiency: Floaters vs. Jump Serves"),
+          plotOutput("sei_type_plot", height = "520px")
+        )
+      )
+    ),
+
+    # SEI QUADRANT CHART
+    nav_panel(title = "SEI Quadrant",
+      layout_sidebar(
+        sidebar = sidebar(
+          helpText("Each point is a player's serve type (min 30 serves). Dashed lines are league averages."),
+          helpText(strong("Top-left:"), " snipers (low error, high OOS)."),
+          helpText(strong("Top-right:"), " heavy hitters (high risk, high reward)."),
+          helpText(strong("Bottom-left:"), " safe servers (low risk, low OOS)."),
+          helpText(strong("Bottom-right:"), " high risk, low reward.")
+        ),
+        card(
+          card_header("Error % vs. Out-of-System %"),
+          plotOutput("sei_quadrant_plot", height = "520px")
+        )
+      )
+    )
+  )
+)
+
+# ==========================================
+# SERVER
+# ==========================================
+server <- function(input, output, session) {
+  
+  # ---------------------------------------------------------
+  # REACTIVE DATA PREP
+  # ---------------------------------------------------------
+  
+  # Tab 1: Reception Data
+  player_totals <- reactive({
+    req(exists("all_match_receptions", envir = .GlobalEnv))
+    all_match_receptions |>
+      group_by(player_name, team) |>
+      summarize(total_passes = n(), overall_avg_rating = mean(pass_rating, na.rm = TRUE), .groups = "drop") |>
+      filter(total_passes > 20)
+  })
+  
+  # Tab 2: Point Win Data
+  pass_rating_point_wol <- reactive({
+    req(exists("all_match_receptions", envir = .GlobalEnv))
+    all_match_receptions |>
+      filter(!is.na(pass_rating)) |>
+      mutate(won_point = ifelse(point_won_by == team, 1, 0))
+  })
+  
+  # Tab 3: OSS Data
+  oss_data <- reactive({
+    req(exists("all_matches_outcomes", envir = .GlobalEnv))
+    
+    all_matches_outcomes |>
+      filter(skill == "Attack") |>
+      group_by(player_name, team) |>
+      mutate(total_hits = n()) |>
+      filter(total_hits >= 20) |> 
+      ungroup() |>
+      mutate(
+        attack_rating = case_match(evaluation_code,
+                                   "#" ~ 3,
+                                   "+" ~ 2,
+                                   "-" ~ 1,
+                                   "/" ~ 0,
+                                   "=" ~ 0,
+                                   .default = NA
+        ),
+        block_rating = case_match(num_players_numeric,
+                                  4 ~ 0,
+                                  3 ~ 3,
+                                  2 ~ 2,
+                                  1 ~ 1,
+                                  0 ~ 0,
+                                  .default = NA
+        ),
+        rec_tran_phase_diff_score = case_match(phase,
+                                               "Reception" ~ 1,
+                                               "Transition" ~ 1.5,
+                                               .default = NA
+        )
+      ) |>
+      drop_na(attack_rating, block_rating, rec_tran_phase_diff_score) |> 
+      mutate(
+        diff_score = rec_tran_phase_diff_score * block_rating,
+        new_offensive_strength_stat = (attack_rating + 1) / (diff_score + 1)
+      ) |>
+      group_by(team, player_number, player_name) |>
+      summarize(
+        total_hits = first(total_hits),
+        OSS = mean(new_offensive_strength_stat, na.rm = TRUE),
+        .groups = "drop"
+      )
+  })
+  
+  # Tab 4: Out of System Data
+  oos_data <- reactive({
+    req(exists("all_match_data", envir = .GlobalEnv))
+    
+    all_match_data |>
+      filter(skill %in% c("Set", "Attack")) |>
+      group_by(match_id, team) |> 
+      filter(!(skill == "Attack" & lag(skill) == "Attack")) |>
+      mutate(play_id = cumsum(skill == "Set")) |>
+      ungroup() |>
+      pivot_wider(
+        id_cols = c(match_id, play_id, team),
+        names_from = skill,
+        values_from = c(player_number, player_name, evaluation_code),
+        names_glue = "{skill}_{.value}"
+      ) |>
+      mutate(
+        attack_rating = case_match(Attack_evaluation_code,
+                                   "#" ~ 1,
+                                   "+" ~ 0,
+                                   "-" ~ 0,
+                                   "/" ~ -1,
+                                   "=" ~ -1,
+                                   .default = NA
+        )
+      ) |>
+      drop_na(attack_rating, Set_player_number) |>
+      group_by(team, Set_player_number, Set_player_name) |>
+      summarize(
+        hitter_efficiency = sum(attack_rating) / n(),
+        number_sets = n(),
+        .groups = "drop"
+      ) |>
+      group_by(team) |>
+      mutate(
+        # Identify the primary setter dynamically by whoever has the max sets on the team
+        Set_player_name = ifelse(number_sets == max(number_sets), 
+                                 paste0(Set_player_name, " (Primary Setter)"), 
+                                 Set_player_name)
+      ) |>
+      ungroup() |>
+      filter(number_sets >= 10) # Enforce the minimum 10 sets threshold
+  })
+  
+  # ---------------------------------------------------------
+  # DYNAMIC UI UPDATES (Dropdowns)
+  # ---------------------------------------------------------
+  
+  observe({
+    req(player_totals())
+    updateSelectInput(session, "player_select", choices = sort(unique(player_totals()$player_name)))
+  })
+  
+  observe({
+    req(pass_rating_point_wol())
+    updateSelectInput(session, "team_select", choices = sort(unique(pass_rating_point_wol()$team)))
+  })
+  
+  observe({
+    req(oss_data())
+    updateSelectInput(session, "oss_team_select", choices = sort(unique(oss_data()$team)))
+  })
+  
+  observe({
+    req(oos_data())
+    updateSelectInput(session, "oos_team_select", choices = sort(unique(oos_data()$team)))
+  })
+  
+  # ---------------------------------------------------------
+  # TAB 1 OUTPUTS
+  # ---------------------------------------------------------
+  
+  output$win_loss_summary <- renderUI({
+    req(exists("all_match_receptions", envir = .GlobalEnv))
+    df <- all_match_receptions
+    avg_win <- df |> filter(win_loss == 1) |> summarize(avg = mean(pass_rating, na.rm = TRUE)) |> pull(avg)
+    avg_loss <- df |> filter(win_loss == 0) |> summarize(avg = mean(pass_rating, na.rm = TRUE)) |> pull(avg)
+    diff <- avg_win - avg_loss
+    
+    tagList(
+      p(strong("Teams that win matches have an average pass rating of: "), round(avg_win, 3)),
+      p(strong("Teams that lose matches have an average pass rating of: "), round(avg_loss, 3)),
+      p(strong("This results in a difference of: "), round(diff, 3), " average passer rating.")
+    )
+  })
+  
+  output$team_averages <- renderTable({
+    req(exists("all_match_receptions", envir = .GlobalEnv))
+    all_match_receptions |>
+      group_by(team, win_loss) |>
+      summarize(avg_pass_rating = mean(pass_rating, na.rm = TRUE), .groups = "drop") |>
+      arrange(desc(avg_pass_rating)) |>
+      mutate(Rank = row_number()) |>
+      mutate(win_loss = ifelse(win_loss == 1, "Win", "Loss")) |>
+      relocate(Rank) |>
+      rename(Team = team, `Match Outcome` = win_loss, `Average Pass Rating` = avg_pass_rating)
+  }, digits = 3)
+  
+  output$player_report <- renderTable({
+    req(exists("reception_by_player_by_location", envir = .GlobalEnv), input$player_select)
+    reception_by_player_by_location |>
+      filter(player_name == input$player_select) |>
+      dplyr::select(player_name, skill_subtype, avg_pass_rating) |>
+      arrange(desc(avg_pass_rating)) |>
+      rename(Player = player_name, Location = skill_subtype, `Avg Pass Rating` = avg_pass_rating)
+  }, digits = 3)
+  
+  output$overall_leaderboard <- renderTable({
+    req(player_totals())
+    player_totals() |>
+      arrange(desc(overall_avg_rating)) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_name, team, total_passes, overall_avg_rating) |>
+      rename(Player = player_name, Team = team, `Total Passes` = total_passes, `Overall Avg Rating` = overall_avg_rating)
+  }, digits = 3)
+  
+  # ---------------------------------------------------------
+  # TAB 2 OUTPUTS
+  # ---------------------------------------------------------
+  
+  output$overall_point_win_pct <- renderTable({
+    req(pass_rating_point_wol())
+    
+    pass_rating_point_wol() |>
+      group_by(pass_rating) |>
+      summarize(
+        total_passes = n(),
+        points_won = sum(won_point, na.rm = TRUE),
+        win_pct = round((points_won / total_passes) * 100, 2),
+        .groups = "drop"
+      ) |>
+      mutate(win_pct = paste0(win_pct, "%")) |> 
+      rename(`Pass Rating` = pass_rating, `Total Passes` = total_passes, 
+             `Points Won` = points_won, `% Chance of Winning Point` = win_pct)
+  })
+  
+  output$team_point_win_header <- renderText({
+    req(input$team_select)
+    paste(input$team_select, "- % Chance to Win Point")
+  })
+  
+  output$team_point_win_pct <- renderTable({
+    req(pass_rating_point_wol(), input$team_select)
+    
+    pass_rating_point_wol() |>
+      filter(team == input$team_select) |>
+      group_by(pass_rating) |>
+      summarize(
+        total_passes = n(),
+        points_won = sum(won_point, na.rm = TRUE),
+        win_pct = round((points_won / total_passes) * 100, 2),
+        .groups = "drop"
+      ) |>
+      mutate(win_pct = paste0(win_pct, "%")) |>
+      rename(`Pass Rating` = pass_rating, `Total Passes` = total_passes, 
+             `Points Won` = points_won, `% Chance of Winning Point` = win_pct)
+  })
+  
+  # ---------------------------------------------------------
+  # TAB 3 OUTPUTS
+  # ---------------------------------------------------------
+  
+  output$oss_team_header <- renderText({
+    req(input$oss_team_select)
+    paste(input$oss_team_select, "Offensive Strength")
+  })
+  
+  output$oss_team_table <- renderTable({
+    req(oss_data(), input$oss_team_select)
+    
+    oss_data() |>
+      filter(team == input$oss_team_select) |>
+      arrange(desc(OSS)) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_number, player_name, total_hits, OSS) |>
+      rename(`Number` = player_number, Player = player_name, `Total Hits` = total_hits)
+  }, digits = 3)
+  
+  output$oss_overall_table <- renderTable({
+    req(oss_data())
+    
+    oss_data() |>
+      arrange(desc(OSS)) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_name, team, total_hits, OSS) |>
+      rename(Player = player_name, Team = team, `Total Hits` = total_hits)
+  }, digits = 3)
+  
+  # ---------------------------------------------------------
+  # TAB 4 OUTPUTS (OOS)
+  # ---------------------------------------------------------
+  
+  output$oos_header <- renderText({
+    req(input$oos_team_select)
+    paste(input$oos_team_select, "- Setter to Hitter Efficiency")
+  })
+  
+  output$oos_table <- renderTable({
+    req(oos_data(), input$oos_team_select)
+    
+    oos_data() |>
+      filter(team == input$oos_team_select) |>
+      arrange(desc(number_sets)) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, Set_player_number, Set_player_name, number_sets, hitter_efficiency) |>
+      rename(`Number` = Set_player_number, Player = Set_player_name,
+             `Total Sets Given` = number_sets, `Hitter Efficiency` = hitter_efficiency)
+  }, digits = 3)
+
+  # ---------------------------------------------------------
+  # TAB 5: SERVING DATA PREP
+  # ---------------------------------------------------------
+
+  # All serves with SPI components (Ace +1, Good Pressure +0.5, Error -1)
+  serve_base <- reactive({
+    req(exists("all_matches_outcomes", envir = .GlobalEnv))
+
+    all_matches_outcomes |>
+      filter(skill == "Serve") |>
+      mutate(
+        zone = start_zone,
+        ace = evaluation_code == "#",
+        good_pressure = evaluation_code == "+",
+        error = evaluation_code == "-",
+        SPI = (ace * 1.0) + (good_pressure * 0.5) - (error * 1.0)
+      )
+  })
+
+  # Per-player SPI (min 20 serves)
+  serve_player_data <- reactive({
+    req(serve_base())
+
+    serve_base() |>
+      group_by(team, player_number, player_name) |>
+      summarize(
+        total_serves = n(),
+        SPI = mean(SPI, na.rm = TRUE),
+        ace_rate = mean(ace, na.rm = TRUE),
+        error_rate = mean(error, na.rm = TRUE),
+        .groups = "drop"
+      ) |>
+      filter(total_serves >= 20)
+  })
+
+  # Per-zone SPI for the selected team
+  serve_zone_data <- reactive({
+    req(serve_base(), input$serve_team_select)
+
+    serve_base() |>
+      filter(team == input$serve_team_select, !is.na(zone)) |>
+      group_by(zone) |>
+      summarize(
+        serves = n(),
+        SPI = mean(SPI, na.rm = TRUE),
+        ace_rate = mean(ace, na.rm = TRUE),
+        error_rate = mean(error, na.rm = TRUE),
+        .groups = "drop"
+      )
+  })
+
+  observe({
+    req(serve_player_data())
+    updateSelectInput(session, "serve_team_select", choices = sort(unique(serve_player_data()$team)))
+  })
+
+  # ---------------------------------------------------------
+  # TAB 5 OUTPUTS
+  # ---------------------------------------------------------
+
+  output$serve_team_header <- renderText({
+    req(input$serve_team_select)
+    paste(input$serve_team_select, "- Server SPI Leaderboard")
+  })
+
+  output$serve_team_table <- renderTable({
+    req(serve_player_data(), input$serve_team_select)
+
+    serve_player_data() |>
+      filter(team == input$serve_team_select) |>
+      arrange(desc(SPI)) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_number, player_name, total_serves, SPI, ace_rate, error_rate) |>
+      rename(`Number` = player_number, Player = player_name, `Total Serves` = total_serves,
+             `Ace Rate` = ace_rate, `Error Rate` = error_rate)
+  }, digits = 3)
+
+  output$serve_overall_table <- renderTable({
+    req(serve_player_data())
+
+    serve_player_data() |>
+      arrange(desc(SPI)) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_name, team, total_serves, SPI, ace_rate, error_rate) |>
+      rename(Player = player_name, Team = team, `Total Serves` = total_serves,
+             `Ace Rate` = ace_rate, `Error Rate` = error_rate)
+  }, digits = 3)
+
+  output$serve_zone_header <- renderText({
+    req(input$serve_team_select)
+    paste(input$serve_team_select, "- SPI by Serve Zone")
+  })
+
+  output$serve_zone_table <- renderTable({
+    req(serve_zone_data())
+
+    serve_zone_data() |>
+      arrange(desc(SPI)) |>
+      mutate(zone = as.character(zone)) |>
+      rename(Zone = zone, Serves = serves, `Ace Rate` = ace_rate, `Error Rate` = error_rate)
+  }, digits = 3)
+
+  output$serve_zone_plot <- renderPlot({
+    req(serve_zone_data())
+
+    ggplot(serve_zone_data(), aes(x = factor(zone), y = SPI, fill = SPI)) +
+      geom_col() +
+      labs(x = "Serve Zone", y = "SPI",
+           title = paste(input$serve_team_select, "- SPI by Serve Zone")) +
+      theme_minimal()
+  })
+
+  # ---------------------------------------------------------
+  # TAB 6: BLOCKING DATA PREP
+  # ---------------------------------------------------------
+
+  # All blocks with Block Influence Score (BIS) components
+  block_base <- reactive({
+    req(exists("all_matches_outcomes", envir = .GlobalEnv))
+
+    all_matches_outcomes |>
+      filter(skill == "Block") |>
+      mutate(
+        BIS_score = case_when(
+          evaluation_code == "#" ~ 1,     # block kill
+          evaluation_code == "+" ~ 0.5,   # block touch
+          evaluation_code == "-" ~ -1,    # block error
+          TRUE ~ 0
+        )
+      )
+  })
+
+  # Per-player blocking stats (min 10 attempts)
+  block_player_data <- reactive({
+    req(block_base())
+
+    block_base() |>
+      group_by(team, player_number, player_name) |>
+      summarize(
+        attempts = n(),
+        kills = sum(evaluation == "Winning block", na.rm = TRUE),
+        errors = sum(evaluation == "Error", na.rm = TRUE),
+        efficiency = (kills - errors) / attempts,
+        touch_rate = mean(evaluation %in% c("Winning block", "In play"), na.rm = TRUE),
+        blocks_per_set = sum(evaluation == "Winning block", na.rm = TRUE) / n_distinct(match_id, set_number),
+        BIS = mean(BIS_score, na.rm = TRUE),
+        .groups = "drop"
+      ) |>
+      filter(attempts >= 10)
+  })
+
+  # Per-team blocking summary
+  block_team_data <- reactive({
+    req(block_base())
+
+    block_base() |>
+      group_by(team) |>
+      summarize(
+        attempts = n(),
+        kills = sum(evaluation == "Winning block", na.rm = TRUE),
+        errors = sum(evaluation == "Error", na.rm = TRUE),
+        efficiency = (kills - errors) / attempts,
+        .groups = "drop"
+      ) |>
+      arrange(desc(efficiency))
+  })
+
+  # Opponent hitting % when a block touch is present in the rally vs not
+  block_impact_data <- reactive({
+    req(exists("all_matches_outcomes", envir = .GlobalEnv))
+
+    plays_clean <- all_matches_outcomes |> filter(!is.na(skill))
+
+    block_presence <- plays_clean |>
+      group_by(match_id, point_id) |>
+      summarize(
+        block_touch = any(skill == "Block" & evaluation_code %in% c("#", "+")),
+        .groups = "drop"
+      )
+
+    plays_clean |>
+      filter(skill == "Attack") |>
+      mutate(kill = evaluation_code == "#", error = evaluation_code == "-") |>
+      dplyr::select(match_id, point_id, kill, error) |>
+      left_join(block_presence, by = c("match_id", "point_id")) |>
+      group_by(block_touch) |>
+      summarize(
+        kills = sum(kill, na.rm = TRUE),
+        errors = sum(error, na.rm = TRUE),
+        attempts = n(),
+        hitting_pct = (kills - errors) / attempts,
+        .groups = "drop"
+      )
+  })
+
+  # Opponent hitting % for the SELECTED team's blocking:
+  # among opponent attacks in matches the team played, split by whether the
+  # selected team got a block touch (#/+) in that rally.
+  block_impact_team_data <- reactive({
+    req(exists("all_matches_outcomes", envir = .GlobalEnv), input$block_team_select)
+    sel_team <- input$block_team_select
+
+    plays_clean <- all_matches_outcomes |> filter(!is.na(skill))
+
+    team_matches <- plays_clean |>
+      filter(team == sel_team) |>
+      distinct(match_id) |>
+      pull(match_id)
+
+    team_block_presence <- plays_clean |>
+      filter(skill == "Block", team == sel_team) |>
+      group_by(match_id, point_id) |>
+      summarize(
+        block_touch = any(evaluation_code %in% c("#", "+")),
+        .groups = "drop"
+      )
+
+    opp_attacks <- plays_clean |>
+      filter(skill == "Attack", team != sel_team, match_id %in% team_matches) |>
+      mutate(kill = evaluation_code == "#", error = evaluation_code == "-") |>
+      dplyr::select(match_id, point_id, kill, error) |>
+      left_join(team_block_presence, by = c("match_id", "point_id")) |>
+      mutate(block_touch = ifelse(is.na(block_touch), FALSE, block_touch))
+
+    by_touch <- opp_attacks |>
+      mutate(group = ifelse(block_touch, "Block Touch in Rally", "No Block Touch")) |>
+      group_by(group) |>
+      summarize(
+        kills = sum(kill, na.rm = TRUE),
+        errors = sum(error, na.rm = TRUE),
+        attempts = n(),
+        hitting_pct = (kills - errors) / attempts,
+        .groups = "drop"
+      )
+
+    overall <- opp_attacks |>
+      summarize(
+        group = "Overall (All Attacks)",
+        kills = sum(kill, na.rm = TRUE),
+        errors = sum(error, na.rm = TRUE),
+        attempts = n(),
+        hitting_pct = (kills - errors) / attempts
+      )
+
+    bind_rows(by_touch, overall)
+  })
+
+  observe({
+    req(block_player_data())
+    updateSelectInput(session, "block_team_select", choices = sort(unique(block_player_data()$team)))
+  })
+
+  # ---------------------------------------------------------
+  # TAB 6 OUTPUTS
+  # ---------------------------------------------------------
+
+  output$block_team_header <- renderText({
+    req(input$block_team_select)
+    paste(input$block_team_select, "- Player Blocking Report")
+  })
+
+  output$block_team_table <- renderTable({
+    req(block_player_data(), input$block_team_select)
+
+    block_player_data() |>
+      filter(team == input$block_team_select) |>
+      arrange(desc(BIS)) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_number, player_name, attempts, kills, errors, efficiency, touch_rate, blocks_per_set, BIS) |>
+      rename(`Number` = player_number, Player = player_name, Attempts = attempts,
+             Kills = kills, Errors = errors, Efficiency = efficiency,
+             `Touch Rate` = touch_rate, `Blocks/Set` = blocks_per_set)
+  }, digits = 3)
+
+  output$block_overall_table <- renderTable({
+    req(block_player_data())
+
+    block_player_data() |>
+      arrange(desc(BIS)) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_name, team, attempts, efficiency, touch_rate, BIS) |>
+      rename(Player = player_name, Team = team, Attempts = attempts,
+             Efficiency = efficiency, `Touch Rate` = touch_rate)
+  }, digits = 3)
+
+  output$block_team_summary <- renderTable({
+    req(block_team_data())
+
+    block_team_data() |>
+      mutate(Rank = row_number()) |>
+      relocate(Rank) |>
+      rename(Team = team, Attempts = attempts, Kills = kills,
+             Errors = errors, Efficiency = efficiency)
+  }, digits = 3)
+
+  output$block_impact_table <- renderTable({
+    req(block_impact_data())
+
+    block_impact_data() |>
+      mutate(block_touch = ifelse(block_touch, "Block Touch in Rally", "No Block Touch")) |>
+      arrange(block_touch) |>
+      rename(`Block Presence` = block_touch, Kills = kills, Errors = errors,
+             Attempts = attempts, `Opponent Hitting %` = hitting_pct)
+  }, digits = 3)
+
+  output$block_impact_team_header <- renderText({
+    req(input$block_team_select)
+    paste(input$block_team_select, "- Opponent Hitting % vs Block Presence")
+  })
+
+  output$block_impact_team_table <- renderTable({
+    req(block_impact_team_data())
+
+    block_impact_team_data() |>
+      rename(`Block Presence` = group, Kills = kills, Errors = errors,
+             Attempts = attempts, `Opponent Hitting %` = hitting_pct)
+  }, digits = 3)
+
+  output$block_eff_header <- renderText({
+    req(input$block_team_select)
+    paste(input$block_team_select, "- Blocking Efficiency by Player")
+  })
+
+  output$block_eff_plot <- renderPlot({
+    req(block_player_data(), input$block_team_select)
+
+    block_player_data() |>
+      filter(team == input$block_team_select) |>
+      ggplot(aes(x = reorder(player_name, efficiency), y = efficiency, fill = efficiency)) +
+      geom_col() +
+      coord_flip() +
+      labs(x = "Player", y = "Blocking Efficiency",
+           title = paste(input$block_team_select, "- Blocking Efficiency")) +
+      theme_minimal()
+  })
+
+  # =========================================================
+  # PRESSURE / CLUTCH DATA PREP
+  # "Pressure" = any rally where either team has reached 20 points.
+  # =========================================================
+
+  pressure_serves <- reactive({
+    req(exists("all_match_data", envir = .GlobalEnv))
+    all_match_data |>
+      filter(skill == "Serve", home_team_score >= 20 | visiting_team_score >= 20)
+  })
+
+  clutch_serve_summary <- reactive({
+    req(pressure_serves())
+    pressure_serves() |>
+      group_by(team, player_name) |>
+      summarize(
+        total_serves = n(),
+        oos_count = sum(evaluation %in% c("Ace", "Positive"), na.rm = TRUE),
+        points_won_count = sum(point_won_by == team, na.rm = TRUE),
+        errors = sum(evaluation == "Error", na.rm = TRUE),
+        .groups = "drop"
+      ) |>
+      mutate(
+        oos_percentage = (oos_count / total_serves) * 100,
+        ps_percentage = (points_won_count / total_serves) * 100
+      ) |>
+      dplyr::select(team, player_name, total_serves, oos_percentage, ps_percentage, errors) |>
+      arrange(desc(ps_percentage), desc(total_serves))
+  })
+
+  clutch_reception_summary <- reactive({
+    req(exists("all_match_data", envir = .GlobalEnv))
+    all_match_data |>
+      filter(skill == "Reception", home_team_score >= 20 | visiting_team_score >= 20) |>
+      group_by(team, player_name) |>
+      summarize(
+        total_receptions = n(),
+        good_passes = sum(evaluation %in% c("Perfect pass", "Positive pass"), na.rm = TRUE),
+        side_outs = sum(point_won_by == team, na.rm = TRUE),
+        errors = sum(evaluation == "Error", na.rm = TRUE),
+        .groups = "drop"
+      ) |>
+      mutate(
+        good_pass_percentage = (good_passes / total_receptions) * 100,
+        side_out_percentage = (side_outs / total_receptions) * 100
+      ) |>
+      dplyr::select(team, player_name, total_receptions, good_pass_percentage, side_out_percentage, errors) |>
+      arrange(desc(side_out_percentage), desc(total_receptions))
+  })
+
+  clutch_offense_summary <- reactive({
+    req(exists("all_match_data", envir = .GlobalEnv))
+    all_match_data |>
+      filter(skill == "Attack", home_team_score >= 20 | visiting_team_score >= 20) |>
+      group_by(team, player_name) |>
+      summarize(
+        attempts = n(),
+        kills = sum(evaluation == "Winning attack", na.rm = TRUE),
+        errors = sum(evaluation == "Error", na.rm = TRUE),
+        blocked = sum(evaluation == "Blocked", na.rm = TRUE),
+        .groups = "drop"
+      ) |>
+      mutate(
+        kill_pct = (kills / attempts) * 100,
+        efficiency = (kills - errors - blocked) / attempts
+      ) |>
+      group_by(team) |>
+      mutate(usage_pct = (attempts / sum(attempts)) * 100) |>
+      ungroup() |>
+      filter(attempts >= 10) |>
+      arrange(desc(efficiency))
+  })
+
+  total_clutch_leaderboard <- reactive({
+    req(clutch_offense_summary(), clutch_serve_summary(), clutch_reception_summary())
+
+    lb <- clutch_offense_summary() |>
+      dplyr::select(team, player_name, att_attempts = attempts, att_eff = efficiency) |>
+      full_join(
+        clutch_serve_summary() |>
+          dplyr::select(team, player_name, srv_attempts = total_serves, srv_ps_pct = ps_percentage),
+        by = c("team", "player_name")
+      ) |>
+      full_join(
+        clutch_reception_summary() |>
+          dplyr::select(team, player_name, rec_attempts = total_receptions, rec_so_pct = side_out_percentage),
+        by = c("team", "player_name")
+      )
+
+    lb[is.na(lb)] <- 0
+
+    lb |>
+      mutate(clutch_index = (att_eff * 100) + rec_so_pct + srv_ps_pct) |>
+      filter((att_attempts + srv_attempts + rec_attempts) >= 15) |>
+      arrange(desc(clutch_index))
+  })
+
+  top_clutch_per_team <- reactive({
+    req(total_clutch_leaderboard())
+    total_clutch_leaderboard() |>
+      group_by(team) |>
+      slice_max(clutch_index, n = 1, with_ties = FALSE) |>
+      ungroup() |>
+      arrange(desc(clutch_index))
+  })
+
+  # ---- Serve Efficiency Index (SEI), season-long across all serves ----
+  serves_adv <- reactive({
+    req(exists("all_match_data", envir = .GlobalEnv))
+    all_match_data |>
+      filter(skill == "Serve") |>
+      mutate(
+        serve_type = case_when(
+          skill_type == "Jump serve" ~ "Jump",
+          skill_type == "Jump-float serve" ~ "Jump-Float",
+          skill_type == "Floating serve" ~ "Float",
+          TRUE ~ "Other"
+        ),
+        is_ace = evaluation == "Ace",
+        is_error = evaluation == "Error",
+        opp_out_of_system = evaluation %in% c("Positive, no attack", "Poor, no attack", "Negative, limited attack"),
+        point_won = point_won_by == team
+      )
+  })
+
+  sei_player <- reactive({
+    req(serves_adv())
+    serves_adv() |>
+      group_by(team, player_name, serve_type) |>
+      summarize(
+        serves = n(),
+        ace_pct = mean(is_ace, na.rm = TRUE) * 100,
+        err_pct = mean(is_error, na.rm = TRUE) * 100,
+        oos_pct = mean(opp_out_of_system, na.rm = TRUE) * 100,
+        win_pct = mean(point_won, na.rm = TRUE) * 100,
+        .groups = "drop"
+      ) |>
+      mutate(sei = (win_pct * 0.5) + (ace_pct * 0.3) + (oos_pct * 0.2) - (err_pct * 0.1)) |>
+      filter(serves >= 20) |>
+      arrange(desc(sei))
+  })
+
+  sei_type_comparison <- reactive({
+    req(serves_adv())
+    serves_adv() |>
+      filter(serve_type %in% c("Float", "Jump", "Jump-Float")) |>
+      group_by(serve_type) |>
+      summarize(
+        `Ace %` = mean(is_ace, na.rm = TRUE) * 100,
+        `Error %` = mean(is_error, na.rm = TRUE) * 100,
+        `OOS %` = mean(opp_out_of_system, na.rm = TRUE) * 100,
+        `Win %` = mean(point_won, na.rm = TRUE) * 100,
+        `SEI` = (mean(point_won, na.rm = TRUE) * 50) + (mean(is_ace, na.rm = TRUE) * 30) +
+                (mean(opp_out_of_system, na.rm = TRUE) * 20) - (mean(is_error, na.rm = TRUE) * 10),
+        .groups = "drop"
+      ) |>
+      pivot_longer(cols = -serve_type, names_to = "Metric", values_to = "Value")
+  })
+
+  # ---------------------------------------------------------
+  # DROPDOWN UPDATES
+  # ---------------------------------------------------------
+  observe({
+    req(clutch_serve_summary())
+    updateSelectInput(session, "clutch_serve_team", choices = sort(unique(clutch_serve_summary()$team)))
+  })
+  observe({
+    req(clutch_reception_summary())
+    updateSelectInput(session, "clutch_rec_team", choices = sort(unique(clutch_reception_summary()$team)))
+  })
+  observe({
+    req(clutch_offense_summary())
+    updateSelectInput(session, "clutch_off_team", choices = sort(unique(clutch_offense_summary()$team)))
+  })
+  observe({
+    req(sei_player())
+    updateSelectInput(session, "sei_team", choices = sort(unique(sei_player()$team)))
+  })
+
+  # ---------------------------------------------------------
+  # CLUTCH SERVING OUTPUTS
+  # ---------------------------------------------------------
+  output$clutch_serve_header <- renderText({
+    req(input$clutch_serve_team)
+    paste(input$clutch_serve_team, "- Clutch Serving")
+  })
+
+  output$clutch_serve_team_table <- renderTable({
+    req(clutch_serve_summary(), input$clutch_serve_team)
+    clutch_serve_summary() |>
+      filter(team == input$clutch_serve_team) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_name, total_serves, oos_percentage, ps_percentage, errors) |>
+      rename(Player = player_name, `Total Serves` = total_serves, `Aggressive %` = oos_percentage,
+             `Point-Scoring %` = ps_percentage, Errors = errors)
+  }, digits = 1)
+
+  output$clutch_serve_overall_table <- renderTable({
+    req(clutch_serve_summary())
+    clutch_serve_summary() |>
+      head(25) |>
+      mutate(Rank = row_number()) |>
+      relocate(Rank) |>
+      rename(Team = team, Player = player_name, `Total Serves` = total_serves,
+             `Aggressive %` = oos_percentage, `Point-Scoring %` = ps_percentage, Errors = errors)
+  }, digits = 1)
+
+  # ---------------------------------------------------------
+  # CLUTCH RECEPTION OUTPUTS
+  # ---------------------------------------------------------
+  output$clutch_rec_header <- renderText({
+    req(input$clutch_rec_team)
+    paste(input$clutch_rec_team, "- Clutch Reception")
+  })
+
+  output$clutch_rec_team_table <- renderTable({
+    req(clutch_reception_summary(), input$clutch_rec_team)
+    clutch_reception_summary() |>
+      filter(team == input$clutch_rec_team) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_name, total_receptions, good_pass_percentage, side_out_percentage, errors) |>
+      rename(Player = player_name, `Total Receptions` = total_receptions,
+             `Good Pass %` = good_pass_percentage, `Side-Out %` = side_out_percentage, Errors = errors)
+  }, digits = 1)
+
+  output$clutch_rec_overall_table <- renderTable({
+    req(clutch_reception_summary())
+    clutch_reception_summary() |>
+      head(25) |>
+      mutate(Rank = row_number()) |>
+      relocate(Rank) |>
+      rename(Team = team, Player = player_name, `Total Receptions` = total_receptions,
+             `Good Pass %` = good_pass_percentage, `Side-Out %` = side_out_percentage, Errors = errors)
+  }, digits = 1)
+
+  # ---------------------------------------------------------
+  # CLUTCH OFFENSE OUTPUTS
+  # ---------------------------------------------------------
+  output$clutch_off_header <- renderText({
+    req(input$clutch_off_team)
+    paste(input$clutch_off_team, "- Clutch Offense")
+  })
+
+  output$clutch_off_team_table <- renderTable({
+    req(clutch_offense_summary(), input$clutch_off_team)
+    clutch_offense_summary() |>
+      filter(team == input$clutch_off_team) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_name, attempts, kills, errors, blocked, kill_pct, efficiency, usage_pct) |>
+      rename(Player = player_name, Attempts = attempts, Kills = kills, Errors = errors,
+             Blocked = blocked, `Kill %` = kill_pct, Efficiency = efficiency, `Usage %` = usage_pct)
+  }, digits = 2)
+
+  output$clutch_off_overall_table <- renderTable({
+    req(clutch_offense_summary())
+    clutch_offense_summary() |>
+      head(25) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, team, player_name, attempts, kills, errors, blocked, kill_pct, efficiency, usage_pct) |>
+      rename(Team = team, Player = player_name, Attempts = attempts, Kills = kills, Errors = errors,
+             Blocked = blocked, `Kill %` = kill_pct, Efficiency = efficiency, `Usage %` = usage_pct)
+  }, digits = 2)
+
+  # ---------------------------------------------------------
+  # ALL-AROUND CLUTCH OUTPUTS
+  # ---------------------------------------------------------
+  output$top_clutch_team_table <- renderTable({
+    req(top_clutch_per_team())
+    top_clutch_per_team() |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, team, player_name, clutch_index, att_eff, rec_so_pct, srv_ps_pct) |>
+      rename(Team = team, Player = player_name, `Clutch Index` = clutch_index,
+             `Hitting Eff` = att_eff, `Side-Out %` = rec_so_pct, `Serve PS %` = srv_ps_pct)
+  }, digits = 2)
+
+  output$clutch_overall_table <- renderTable({
+    req(total_clutch_leaderboard())
+    total_clutch_leaderboard() |>
+      head(20) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, team, player_name, clutch_index, att_eff, rec_so_pct, srv_ps_pct,
+                    att_attempts, srv_attempts, rec_attempts) |>
+      rename(Team = team, Player = player_name, `Clutch Index` = clutch_index,
+             `Hitting Eff` = att_eff, `Side-Out %` = rec_so_pct, `Serve PS %` = srv_ps_pct,
+             `Att` = att_attempts, `Srv` = srv_attempts, `Rec` = rec_attempts)
+  }, digits = 2)
+
+  # ---------------------------------------------------------
+  # SERVE EFFICIENCY (SEI) OUTPUTS
+  # ---------------------------------------------------------
+  output$sei_team_header <- renderText({
+    req(input$sei_team)
+    paste(input$sei_team, "- Serve Efficiency Index")
+  })
+
+  output$sei_team_table <- renderTable({
+    req(sei_player(), input$sei_team)
+    sei_player() |>
+      filter(team == input$sei_team) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, player_name, serve_type, serves, ace_pct, err_pct, oos_pct, win_pct, sei) |>
+      rename(Player = player_name, `Serve Type` = serve_type, Serves = serves,
+             `Ace %` = ace_pct, `Error %` = err_pct, `OOS %` = oos_pct, `Win %` = win_pct, SEI = sei)
+  }, digits = 1)
+
+  output$sei_overall_table <- renderTable({
+    req(sei_player())
+    sei_player() |>
+      head(15) |>
+      mutate(Rank = row_number()) |>
+      dplyr::select(Rank, team, player_name, serve_type, serves, ace_pct, err_pct, oos_pct, win_pct, sei) |>
+      rename(Team = team, Player = player_name, `Serve Type` = serve_type, Serves = serves,
+             `Ace %` = ace_pct, `Error %` = err_pct, `OOS %` = oos_pct, `Win %` = win_pct, SEI = sei)
+  }, digits = 1)
+
+  output$sei_type_plot <- renderPlot({
+    req(sei_type_comparison())
+    ggplot(sei_type_comparison(), aes(x = serve_type, y = Value, fill = serve_type)) +
+      geom_col(alpha = 0.85, color = "black") +
+      facet_wrap(~Metric, scales = "free_y") +
+      scale_fill_brewer(palette = "Set2") +
+      labs(title = "Advanced Serve Efficiency: Floaters vs. Jump Serves",
+           subtitle = "Season-long averages across all games",
+           x = "Serve Style", y = "Score / Percentage", fill = "Style") +
+      theme_minimal() +
+      theme(strip.text = element_text(face = "bold", size = 12))
+  })
+
+  output$sei_quadrant_plot <- renderPlot({
+    req(sei_player())
+    d <- sei_player() |> filter(serves >= 30)
+    req(nrow(d) > 0)
+
+    ggplot(d, aes(x = err_pct, y = oos_pct)) +
+      geom_vline(xintercept = mean(d$err_pct), linetype = "dashed", color = "gray50") +
+      geom_hline(yintercept = mean(d$oos_pct), linetype = "dashed", color = "gray50") +
+      geom_point(aes(color = serve_type, size = serves), alpha = 0.7) +
+      scale_color_brewer(palette = "Set1") +
+      labs(title = "Interactive Serve Analysis (min 30 serves)",
+           x = "Error %", y = "Out-of-System %", color = "Serve Type", size = "Serves") +
+      theme_minimal()
+  })
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+
+```
+
