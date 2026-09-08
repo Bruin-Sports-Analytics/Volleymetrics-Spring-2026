@@ -6,8 +6,6 @@ Advanced volleyball analytics pipeline and interactive dashboard built by **Brui
 
 Volleymetrics ingests play-by-play match data captured with DataVolley scouting software and turns it into advanced, actionable statistics for coaching staff and analysts. The pipeline reads raw scouting files, stitches them into a season-long play-by-play dataset, derives a set of custom advanced metrics (passer rating, offensive strength, serve efficiency, block influence, clutch performance, and more), and surfaces all of it through an interactive R Shiny dashboard.
 
-The project originated as a Quarto notebook (`Volley Group Test Code.qmd`) used by the analytics team to prototype metrics before productionizing them into the dashboard.
-
 ## Data
 
 Match files are not included in this repository.
@@ -62,7 +60,6 @@ Rallies where either team has reached 20+ points:
 | Layer | Tools |
 | --- | --- |
 | Language | R |
-| Notebook / prototyping | [Quarto](https://quarto.org/) (`.qmd`) |
 | Data ingestion | [`datavolley`](https://github.com/openvolley/datavolley) (DataVolley `.dvw`/`.vsm` parser) |
 | Data wrangling | `tidyverse`, `dplyr` |
 | Visualization | `ggplot2` |
